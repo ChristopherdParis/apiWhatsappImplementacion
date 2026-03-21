@@ -1,6 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
+import { ErrorLogService } from '../../common/services/error-log.service';
 import type {
   MediaMessageDto,
   SendMediaMessageByTypeDto,
@@ -21,7 +22,10 @@ import type {
 export class WhatsappService {
   private readonly logger = new Logger(WhatsappService.name);
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly errorLogService: ErrorLogService,
+  ) {}
 
   verifyWebhook(
     mode: unknown,
@@ -350,6 +354,15 @@ export class WhatsappService {
       this.logger.error(
         JSON.stringify(error?.response?.data ?? error?.message ?? error),
       );
+      await this.errorLogService.logOperationalError(
+        'WhatsappService.forwardIncomingEvents',
+        'Error forwarding incoming WhatsApp event',
+        {
+          forwardUrl,
+          response: error?.response?.data,
+          message: error?.message,
+        },
+      );
       throw new BadRequestException('Error forwarding incoming WhatsApp event');
     }
   }
@@ -381,6 +394,16 @@ export class WhatsappService {
     } catch (error: any) {
       this.logger.error(
         JSON.stringify(error?.response?.data ?? error?.message ?? error),
+      );
+      await this.errorLogService.logOperationalError(
+        'WhatsappService.sendWhatsappRequest',
+        'Error posting to WhatsApp Cloud API',
+        {
+          url,
+          payload,
+          response: error?.response?.data,
+          message: error?.message,
+        },
       );
       throw new BadRequestException('Error posting to WhatsApp Cloud API');
     }

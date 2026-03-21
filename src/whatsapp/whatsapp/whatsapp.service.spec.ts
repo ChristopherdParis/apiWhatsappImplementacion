@@ -2,12 +2,17 @@ import { HttpService } from '@nestjs/axios';
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { of } from 'rxjs';
+import { ErrorLogService } from '../../common/services/error-log.service';
 import { WhatsappService } from './whatsapp.service';
 
 describe('WhatsappService', () => {
   let service: WhatsappService;
   const httpServiceMock = {
     post: jest.fn(),
+  };
+  const errorLogServiceMock = {
+    logException: jest.fn(),
+    logOperationalError: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -17,6 +22,10 @@ describe('WhatsappService', () => {
         {
           provide: HttpService,
           useValue: httpServiceMock,
+        },
+        {
+          provide: ErrorLogService,
+          useValue: errorLogServiceMock,
         },
       ],
     }).compile();

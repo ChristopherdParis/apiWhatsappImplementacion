@@ -14,6 +14,22 @@ WHATSAPP_CLOUD_API_WEBHOOK_VERIFICATION_TOKEN=TU_VERIFY_TOKEN
 WHATSAPP_INCOMING_FORWARD_URL=https://tu-sistema.com/api/whatsapp/incoming
 ```
 
+## Registro de errores
+
+Los errores se guardan en `logs/errors-YYYY-MM-DD.log` en formato JSON por linea.
+
+El sistema:
+
+- separa los logs por dia
+- elimina automaticamente los archivos con mas de 3 dias de antiguedad
+- conserva `logs/` fuera del repositorio por `.gitignore`
+
+Se registran:
+
+- excepciones HTTP/globales con metodo, ruta, query y body
+- errores al reenviar eventos a `WHATSAPP_INCOMING_FORWARD_URL`
+- errores al enviar mensajes a WhatsApp Cloud API
+
 ## Endpoints
 
 ### Verificar webhook
