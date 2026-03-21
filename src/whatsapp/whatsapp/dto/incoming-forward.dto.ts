@@ -16,3 +16,19 @@ export interface ForwardIncomingWhatsappPayloadDto {
   errors: IncomingWhatsappErrorSummary[];
   events: IncomingWhatsappEventSummary[];
 }
+
+export interface ForwardIncomingWhatsappResultDto {
+  url: string;
+  statusCode: number;
+  response: unknown;
+}
+
+export interface HandleIncomingWebhookResultDto {
+  received: boolean;
+  forwarded?: ForwardIncomingWhatsappResultDto;
+  messages: IncomingWhatsappMessageSummary[];
+  statuses: IncomingWhatsappStatusSummary[];
+  contacts: IncomingWhatsappContactSummary[];
+  errors: IncomingWhatsappErrorSummary[];
+  events: IncomingWhatsappEventSummary[];
+}

@@ -25,14 +25,18 @@ export class HttpExceptionLoggingFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : undefined;
 
-    void this.errorLogService.logException('HttpExceptionLoggingFilter', exception, {
-      method: request.method,
-      path: request.originalUrl,
-      query: request.query as Record<string, unknown>,
-      body: this.sanitizeBody(request.body),
-      statusCode: status,
-      response: this.normalizeResponse(exceptionResponse),
-    });
+    void this.errorLogService.logException(
+      'HttpExceptionLoggingFilter',
+      exception,
+      {
+        method: request.method,
+        path: request.originalUrl,
+        query: request.query as Record<string, unknown>,
+        body: this.sanitizeBody(request.body),
+        statusCode: status,
+        response: this.normalizeResponse(exceptionResponse),
+      },
+    );
 
     response.status(status).json({
       statusCode: status,

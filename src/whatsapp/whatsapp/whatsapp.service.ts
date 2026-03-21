@@ -9,7 +9,11 @@ import type {
   SendTextMessageDto,
   WhatsappMessageType,
 } from './dto/send-whatsapp-message.dto';
-import type { ForwardIncomingWhatsappPayloadDto } from './dto/incoming-forward.dto';
+import type {
+  ForwardIncomingWhatsappPayloadDto,
+  ForwardIncomingWhatsappResultDto,
+  HandleIncomingWebhookResultDto,
+} from './dto/incoming-forward.dto';
 import type {
   IncomingWhatsappContactSummary,
   IncomingWhatsappErrorSummary,
@@ -46,7 +50,9 @@ export class WhatsappService {
     throw new BadRequestException('Invalid webhook verification token');
   }
 
-  async handleIncomingWebhook(payload: any) {
+  async handleIncomingWebhook(
+    payload: any,
+  ): Promise<HandleIncomingWebhookResultDto> {
     const normalizedPayload = this.normalizeIncomingPayload(payload);
 
     if (normalizedPayload.events.length === 0) {
@@ -70,7 +76,10 @@ export class WhatsappService {
     );
     this.logger.debug(JSON.stringify(normalizedPayload));
 
-    const forwarded = await this.forwardIncomingEvents(payload, normalizedPayload);
+    const forwarded = await this.forwardIncomingEvents(
+      payload,
+      normalizedPayload,
+    );
 
     return {
       received: true,
@@ -195,9 +204,15 @@ export class WhatsappService {
     );
 
     const events: IncomingWhatsappEventSummary[] = [
-      ...messages.map((payload) => ({ eventType: 'message' as const, payload })),
+      ...messages.map((payload) => ({
+        eventType: 'message' as const,
+        payload,
+      })),
       ...statuses.map((payload) => ({ eventType: 'status' as const, payload })),
-      ...contacts.map((payload) => ({ eventType: 'contact' as const, payload })),
+      ...contacts.map((payload) => ({
+        eventType: 'contact' as const,
+        payload,
+      })),
       ...errors.map((payload) => ({ eventType: 'error' as const, payload })),
     ];
 
@@ -211,7 +226,10 @@ export class WhatsappService {
   }
 
   private buildIncomingEventSummary(
-    payload: Omit<ForwardIncomingWhatsappPayloadDto, 'object' | 'entry' | 'metadata'>,
+    payload: Omit<
+      ForwardIncomingWhatsappPayloadDto,
+      'object' | 'entry' | 'metadata'
+    >,
   ) {
     return {
       totalEvents: payload.events.length,
@@ -234,7 +252,9 @@ export class WhatsappService {
     };
   }
 
-  private normalizeIncomingMessage(message: any): IncomingWhatsappMessageSummary {
+  private normalizeIncomingMessage(
+    message: any,
+  ): IncomingWhatsappMessageSummary {
     const summary: IncomingWhatsappMessageSummary = {
       id: message?.id,
       from: message?.from,
@@ -323,7 +343,9 @@ export class WhatsappService {
     };
   }
 
-  private normalizeIncomingContact(contact: any): IncomingWhatsappContactSummary {
+  private normalizeIncomingContact(
+    contact: any,
+  ): IncomingWhatsappContactSummary {
     return {
       waId: contact?.wa_id,
       profile: {
@@ -349,7 +371,7 @@ export class WhatsappService {
       ForwardIncomingWhatsappPayloadDto,
       'object' | 'entry' | 'metadata'
     >,
-  ) {
+  ): Promise<ForwardIncomingWhatsappResultDto> {
     const forwardUrl = process.env.WHATSAPP_INCOMING_FORWARD_URL;
 
     if (!forwardUrl?.trim()) {

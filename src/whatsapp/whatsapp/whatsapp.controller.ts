@@ -41,4 +41,3 @@ export class WhatsappController {
     return this.whatsappService.sendTemplateMessage(payload);
   }
 }
-
