@@ -12,6 +12,7 @@ WHATSAPP_CLOUD_API_PHONE_NUMBER=TU_PHONE_NUMBER_ID
 WHATSAPP_CLOUD_API_ACCESS_TOKEN=TU_ACCESS_TOKEN
 WHATSAPP_CLOUD_API_WEBHOOK_VERIFICATION_TOKEN=TU_VERIFY_TOKEN
 WHATSAPP_INCOMING_FORWARD_URL=https://tu-sistema.com/api/whatsapp/incoming
+LOG_LEVELS=log,error,warn,debug,verbose
 ```
 
 ## Registro de errores
@@ -23,6 +24,12 @@ El sistema:
 - separa los logs por dia
 - elimina automaticamente los archivos con mas de 3 dias de antiguedad
 - conserva `logs/` fuera del repositorio por `.gitignore`
+
+En produccion puedes bajar el ruido de terminal usando por ejemplo:
+
+```env
+LOG_LEVELS=log,error,warn
+```
 
 Se registran:
 

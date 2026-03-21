@@ -63,6 +63,11 @@ export class WhatsappService {
     this.logger.log(
       `Incoming WhatsApp events: ${normalizedPayload.events.length}`,
     );
+    this.logger.verbose(
+      `Incoming WhatsApp summary: ${JSON.stringify(
+        this.buildIncomingEventSummary(normalizedPayload),
+      )}`,
+    );
     this.logger.debug(JSON.stringify(normalizedPayload));
 
     const forwarded = await this.forwardIncomingEvents(payload, normalizedPayload);
@@ -202,6 +207,30 @@ export class WhatsappService {
       contacts,
       errors,
       events,
+    };
+  }
+
+  private buildIncomingEventSummary(
+    payload: Omit<ForwardIncomingWhatsappPayloadDto, 'object' | 'entry' | 'metadata'>,
+  ) {
+    return {
+      totalEvents: payload.events.length,
+      messageCount: payload.messages.length,
+      statusCount: payload.statuses.length,
+      contactCount: payload.contacts.length,
+      errorCount: payload.errors.length,
+      messageTypes: payload.messages.map((message) => ({
+        id: message.id,
+        from: message.from,
+        type: message.type,
+        timestamp: message.timestamp,
+      })),
+      statuses: payload.statuses.map((status) => ({
+        id: status.id,
+        recipientId: status.recipientId,
+        status: status.status,
+        timestamp: status.timestamp,
+      })),
     };
   }
 
