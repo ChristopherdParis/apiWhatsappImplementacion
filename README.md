@@ -1,98 +1,164 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# WhatsApp API implementation
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API construida con NestJS para integrar WhatsApp Cloud API.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Variables de entorno
 
-## Description
+Configura estas variables antes de usar los endpoints:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+```env
+WHATSAPP_CLOUD_API_VERSION=v22.0
+WHATSAPP_CLOUD_API_PHONE_NUMBER=TU_PHONE_NUMBER_ID
+WHATSAPP_CLOUD_API_ACCESS_TOKEN=TU_ACCESS_TOKEN
+WHATSAPP_CLOUD_API_WEBHOOK_VERIFICATION_TOKEN=TU_VERIFY_TOKEN
+WHATSAPP_INCOMING_FORWARD_URL=https://tu-sistema.com/api/whatsapp/incoming
 ```
 
-## Compile and run the project
+## Endpoints
 
-```bash
-# development
-$ npm run start
+### Verificar webhook
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```http
+GET /whatsapp/webhook
 ```
 
-## Run tests
+Meta enviara `hub.mode`, `hub.verify_token` y `hub.challenge`.
 
-```bash
-# unit tests
-$ npm run test
+### Recibir eventos
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+```http
+POST /whatsapp/webhook
 ```
 
-## Deployment
+Normaliza todos los eventos entrantes de WhatsApp y los reenvia al endpoint configurado en `WHATSAPP_INCOMING_FORWARD_URL`:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- `text`
+- `image`
+- `audio`
+- `video`
+- `document`
+- `sticker`
+- `statuses` como `sent`, `delivered`, `read`, `failed`
+- `contacts`
+- `errors`
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Payload reenviado:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```json
+{
+  "object": "whatsapp_business_account",
+  "entry": [],
+  "metadata": {
+    "display_phone_number": "111",
+    "phone_number_id": "222"
+  },
+  "messages": [
+    {
+      "id": "wamid.1",
+      "from": "51999999999",
+      "timestamp": "1711000000",
+      "type": "image",
+      "image": {
+        "id": "media-1",
+        "mimeType": "image/jpeg",
+        "sha256": "hash",
+        "caption": "foto"
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "id": "wamid.out.1",
+      "recipientId": "51999999999",
+      "status": "delivered",
+      "timestamp": "1711000001"
+    }
+  ],
+  "contacts": [
+    {
+      "waId": "51999999999",
+      "profile": {
+        "name": "Chris"
+      }
+    }
+  ],
+  "errors": [],
+  "events": [
+    {
+      "eventType": "message",
+      "payload": {}
+    },
+    {
+      "eventType": "status",
+      "payload": {}
+    }
+  ]
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### Enviar texto
 
-## Resources
+```http
+POST /whatsapp/messages/text
+Content-Type: application/json
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+```json
+{
+  "to": "51999999999",
+  "body": "Hola desde NestJS",
+  "previewUrl": false
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Enviar multimedia
 
-## Support
+```http
+POST /whatsapp/messages/media
+Content-Type: application/json
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```json
+{
+  "to": "51999999999",
+  "type": "image",
+  "link": "https://example.com/photo.jpg",
+  "caption": "Imagen de prueba"
+}
+```
 
-## Stay in touch
+Tipos soportados en `type`:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- `image`
+- `audio`
+- `video`
+- `document`
+- `sticker`
 
-## License
+Para GIF en WhatsApp Cloud API, usa un MP4 corto con `type: "video"` o un sticker animado si tu flujo lo requiere.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Enviar template
+
+```http
+POST /whatsapp/messages/template
+Content-Type: application/json
+```
+
+```json
+{
+  "to": "51999999999",
+  "name": "hello_world",
+  "languageCode": "en_US",
+  "components": [
+    {
+      "type": "body",
+      "parameters": [
+        {
+          "type": "text",
+          "text": "Christopher"
+        }
+      ]
+    }
+  ]
+}
+```
